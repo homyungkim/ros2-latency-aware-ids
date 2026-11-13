@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the paper below."
+title: "Latency-Aware Lightweight Intrusion Detection for ROS 2-Based Robotic Arm Remote Control in IIoT Networks"
+authors:
+  - family-names: Kim
+    given-names: Ho Myung
+    orcid: "https://orcid.org/0000-0002-1879-3403"
+    affiliation: "Department of AI Software, Kyungwoon University"
+  - family-names: Jang
+    given-names: Jaeseok
+    orcid: "https://orcid.org/0009-0008-8654-5963"
+    affiliation: "Department of AI Software, Kyungwoon University"
+license: MIT
+date-released: 2026-11-11

@@ -1,0 +1,6 @@
+# Diagnostic override: same testbed on a NON-internal bridge network.
+#   docker compose down
+#   docker compose -f docker-compose.yml -f test-open.yml up -d sim teleop
+networks:
+  rosnet:
+    internal: false

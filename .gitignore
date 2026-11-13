@@ -1,0 +1,31 @@
+# datasets and large outputs (never commit)
+data/*
+!data/README.md
+*.csv
+!results/*.csv
+*.parquet
+*.tar.gz
+*.zip
+*.joblib
+*.onnx
+*.pkl
+results/models/
+
+# manuscript files (keep private until publication)
+*.docx
+*.pdf
+manuscript/
+
+# Python / Jupyter
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+venv/
+.env
+
+# OS / editor
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/

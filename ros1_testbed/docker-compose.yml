@@ -1,0 +1,50 @@
+# ROS 1 (Noetic) control-loop testbed. TCPROS traffic matches ROSIDS23, so the IDS detection results here
+# are a genuine detection test (R1_C1 / R1_C3), unlike the ROS 2 testbed.
+# R1_C0 sim+teleop | R1_C1 +ids | R1_C2 +attacker | R1_C3 +ids+attacker
+name: ros1-ids-testbed
+x-common: &common
+  image: ids-ros1:noetic
+  build: { context: ., dockerfile: docker/Dockerfile }
+  networks: [rosnet]
+  environment:
+    - ROS_MASTER_URI=http://sim:11311
+  volumes:
+    - ./runs:/data
+
+services:
+  sim:
+    <<: *common
+    container_name: sim
+    command: ["/opt/testbed/sim.sh"]
+
+  teleop:
+    <<: *common
+    container_name: teleop
+    depends_on: [sim]
+    command: ["python3", "/opt/testbed/teleop.py"]
+
+  ids:                       # R1_C1 / R1_C3: sees all controller traffic (same net namespace as sim)
+    build: { context: ./ids }
+    image: ids-runtime:latest
+    container_name: ids
+    profiles: ["ids"]
+    network_mode: "service:sim"
+    cap_add: [NET_ADMIN, NET_RAW]
+    cpus: 1.0
+    mem_limit: 2g
+    volumes:
+      - ./runs:/data
+      - ../../06_결과/rosids/models:/models:ro
+    depends_on: [sim]
+
+  attacker:                  # R1_C2 / R1_C3
+    <<: *common
+    container_name: attacker
+    profiles: ["attack"]
+    cap_add: [NET_ADMIN, NET_RAW]
+    command: ["sleep", "infinity"]
+
+networks:
+  rosnet:
+    driver: bridge
+    internal: true

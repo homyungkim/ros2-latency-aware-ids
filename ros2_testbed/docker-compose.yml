@@ -1,0 +1,56 @@
+# ROS 2 control-loop testbed (manuscript Section V-E, Fig. 6). Four containers on one isolated bridge network.
+# C0: sim + teleop.  C1: + ids.  C2: + attacker.  C3: + ids + attacker  (run_c123.ps1).
+name: ros2-ids-testbed
+x-common: &common
+  image: ids-ros2:jazzy
+  networks: [rosnet]
+  environment:
+    - ROS_DOMAIN_ID=7
+    # DDS traffic must cross the bridge network as UDP (no shared memory between containers),
+    # so that teleop/recorder reach the simulation and the IDS can observe all ROS 2 traffic.
+    - FASTDDS_BUILTIN_TRANSPORTS=UDPv4
+    - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+    # Unicast discovery between named containers (multicast discovery did not cross containers on Docker Desktop)
+    - ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET
+    - ROS_STATIC_PEERS=sim;teleop
+  volumes:
+    - ./runs:/data
+
+services:
+  sim:
+    <<: *common
+    build: { context: ., dockerfile: docker/Dockerfile }
+    container_name: sim
+    command: ["/opt/testbed/sim.sh"]
+
+  teleop:
+    <<: *common
+    container_name: teleop
+    depends_on: [sim]
+    command: ["python3", "/opt/testbed/teleop.py"]
+
+  ids:                       # step 2: runs inside the network namespace of sim (= mirror of the controller port)
+    build: { context: ./ids }
+    image: ids-runtime:latest
+    container_name: ids
+    profiles: ["ids"]
+    network_mode: "service:sim"
+    cap_add: [NET_ADMIN, NET_RAW]
+    cpus: 1.0                # edge-class budget: one core
+    mem_limit: 2g
+    volumes:
+      - ./runs:/data
+      - ../../06_결과/rosids/models:/models:ro
+    depends_on: [sim]
+
+  attacker:                  # step 2
+    <<: *common
+    container_name: attacker
+    profiles: ["attack"]
+    cap_add: [NET_ADMIN, NET_RAW]
+    command: ["sleep", "infinity"]
+
+networks:
+  rosnet:
+    driver: bridge
+    internal: true           # isolated from external networks
